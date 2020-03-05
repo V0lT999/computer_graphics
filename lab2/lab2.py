@@ -26,25 +26,6 @@ def bspline(x, t, c, k):
 
 
 def draw_spline(points):
-    # x = [points[i][0] for i in range(7)]
-    # y = [points[i][1] for i in range(7)]
-    #
-    # data = np.array(points)
-    #
-    # colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-    # length = len(x)
-    # u3 = np.linspace(0, 1, 70, endpoint=False)
-    # plt.plot(x, y, 'k--', label='Control polygon', marker='o', markerfacecolor='red')
-    # plt.axis([min(x) - 1, max(x) + 1, min(y) - 1, max(y) + 1])
-    # plt.title('Cubic B-spline curve evaluation')
-    # for k in range(1, 7):
-    #     number_of_internal_knots = length - k + 1
-    #     knot_vector = np.linspace(0, 1, number_of_internal_knots, endpoint=True)
-    #     knot_vector = np.append([0] * k, knot_vector)
-    #     knot_vector = np.append(knot_vector, [1] * k)
-    #     plt.plot([bspline(z, knot_vector, x, k) for z in u3],
-    #              [bspline(z, knot_vector, y, k) for z in u3],
-    #              colors[k - 1], lw=2, label=f'B-spline curve {k} degree')
     colors = ['r', 'orange', 'yellow', 'lime', 'b', 'navy', 'm']
     lin_p = np.linspace(0, 1, 100, endpoint=False)
     xx = [points[i][0] for i in range(7)]
@@ -60,12 +41,6 @@ def draw_spline(points):
         plt.plot([bspline(x, t, xx, k) for x in lin_p],
                  [bspline(x, t, yy, k) for x in lin_p], colors[k-1], lw=2, label=f'B-spline of degree {k}')
 
-    # tck, u = interpolate.splprep(data.transpose(), s=0)
-    # unew = np.arange(0, 1.01, 0.01)
-    # out = interpolate.splev(unew, tck)
-    #
-    # plt.figure()
-    # plt.plot(out[0], out[1], color='orange')
     plt.legend(loc='upper right')
     plt.plot(data[:, 0], data[:, 1], 'ob')
     plt.show()
@@ -238,21 +213,6 @@ def main_window():
 
     reset_button = Button(window, text="Reset", command=reset)
     reset_button.place(x=300, y=290)
-
-    combo_lbl = Label(window, text="Select the axis: ", font=("Arial", 14)).place(x=10, y=330)
-    os_combo = Combobox(window)
-    os_combo["values"] = ("x", "y")
-    os_combo.current(0)
-    os_combo.place(x=150, y=330)
-
-    angle_lbl = Label(window, text="Enter the angle:", font=("Arial", 14)).place(x=10, y=370)
-    angle_field = Entry(window, width=10)
-    angle_field.place(x=150, y=370)
-
-    rotate_button = Button(window, text="Rotate", command=rotate)
-    rotate_button.place(x=300, y=370)
-
-    #reset()
 
     window.mainloop()
 
