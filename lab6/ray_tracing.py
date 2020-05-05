@@ -1,5 +1,6 @@
 import numpy as np
 from figures import Sphere
+from figures import Light
 import drawing
 from tqdm import tqdm
 
@@ -11,11 +12,17 @@ Vh = 1   # height of screen
 d = 1     # distance from camera
 
 spheres = []
+lights = []
 BACKGROUND_COLOR = [255, 255, 255]
 
 spheres.append(Sphere([0, -1, 3], 1, [255, 0, 0]))
 spheres.append(Sphere([2, 0, 4], 1, [0, 0, 255]))
 spheres.append(Sphere([-2, 0, 4], 1, [0, 255, 0]))
+spheres.append(Sphere([0, -5001, 0], 5000, [250, 250, 50]))
+
+lights.append(Light(0, 0.2))
+lights.append(Light(1, 0.6, _position=[2, 1, 0]))
+lights.append(Light(2, 0.2, _direction=[1, 4, 4]))
 
 
 def CanvasToViewport(x, y):   # coordinates on screen
@@ -40,7 +47,11 @@ def TraceRay(O, D, t_min, t_max):
     if closest_sphere is None:
         return BACKGROUND_COLOR
 
-    return closest_sphere.get_elements()['color']
+    P = O + closest_t*D
+    N = P - closest_sphere.get_elements()['center']
+    N = N / np.linalg.norm(N)
+    return np.array(closest_sphere.get_elements()['color']) * ComputeLighing(P, N)
+    # return closest_sphere.get_elements()['color']
 
 
 def IntersectRaySphere(O, D, sphere):
@@ -60,6 +71,25 @@ def IntersectRaySphere(O, D, sphere):
     t1 = (-k2 + np.sqrt(discriminant)) / (2*k1)
     t2 = (-k2 - np.sqrt(discriminant)) / (2*k1)
     return t1, t2
+
+def ComputeLighing(P, N):
+    global lights
+    i = 0.0
+    for light in lights:
+        if light.get_elements()['type'] == 'ambient':
+            i += light.get_elements()['intensity']
+        else:
+            L = []
+            if light.get_elements()['type'] == 'point':
+                L = (light.get_elements()['position'] - P).copy()
+            else:
+                L = light.get_elements()['direction'].copy()
+
+            NL = np.dot(N, L)
+            if NL > 0:
+                i += light.get_elements()['intensity']*NL/(np.linalg.norm(N)*np.linalg.norm(L))
+
+    return i
 
 
 def main():

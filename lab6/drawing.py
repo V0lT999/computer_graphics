@@ -1,6 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from progress.bar import IncrementalBar
 from tqdm import tqdm
 
 import sys
@@ -31,16 +28,6 @@ def put_pixel(x, y, color):
         pixels.append([x1, y1, color])
 
 
-def show():
-    global pixels
-
-    print('start')
-    for pixel in tqdm(pixels):
-        plt.plot(pixel[0], pixel[1], pixel[2])
-        # print(pixel[0], pixel[1], pixel[2])
-    plt.show()
-
-
 class DrawQt(QWidget):
 
     global Cw
@@ -54,7 +41,7 @@ class DrawQt(QWidget):
 
     def initUI(self):
 
-        self.setGeometry(50, 50, 50 + Cw, 50 + Ch)
+        self.setGeometry(50, 50, Cw, Ch)
         self.setWindowTitle('Ray Tracing')
         self.show()
 
