@@ -25,7 +25,8 @@ def put_pixel(x, y, color):
     if x1 < 0 or x1 > Cw or y1 < 0 or y1 > Ch:
         return
     else:
-        pixels.append([x1, y1, color])
+        _color = [min(255, color[0]), min(255, color[1]), min(255, color[2])]
+        pixels.append([x1, y1, _color])
 
 
 class DrawQt(QWidget):
