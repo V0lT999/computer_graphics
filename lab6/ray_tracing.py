@@ -2,15 +2,11 @@ import numpy as np
 from figures import Sphere
 from figures import Light
 import drawing
-from tqdm import tqdm
+from tqdm import tqdm, trange
 from multiprocessing import Process, Manager
+from multiprocessing import Pool
 
-import sys
-from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtGui import QPainter, QColor, QPen
-from PyQt5.QtCore import Qt
-
-
+thread_count = 0
 N = 3
 Cw = 600    # width of window
 Ch = 600    # height of window
@@ -62,7 +58,6 @@ def TraceRay(O, D, t_min, t_max):
     N = P - closest_sphere.get_elements()['center']
     N = N / np.linalg.norm(N)
     return np.array(closest_sphere.get_elements()['color']) * ComputeLighing(P, N, -D, closest_sphere.get_elements()['specular'])
-    # return closest_sphere.get_elements()['color']
 
 
 def IntersectRaySphere(O, D, sphere):
@@ -111,10 +106,15 @@ def ComputeLighing(P, N, V, s):
     return i
 
 
-def processing(array, hash_map):
+def processing(i, array):
     global Ch
     global center_window
-    for x in tqdm(array):
+    global thread_count
+
+    hash_mapp = []
+    text = 'progressbar #{position}'.format(position=i)
+    bar = tqdm(array, position=0, desc=text, leave=True)
+    for x in bar:
         for y in range(-Ch//2, Ch//2, 1):
             D = CanvasToViewport(x, y)
             color = TraceRay(center_window, D, 1, np.inf)
@@ -126,9 +126,9 @@ def processing(array, hash_map):
                 return
             else:
                 _color = [min(255, color[0]), min(255, color[1]), min(255, color[2])]
-                hash_map.append([x1, y1, _color])
-            #drawing.put_pixel(x, y, color)
+                hash_mapp.append([x1, y1, _color])
 
+    return hash_mapp
 
 def main():
     global Cw
@@ -136,36 +136,22 @@ def main():
     global center_window
     drawing.set_window(Cw, Ch)
 
-    thread_count = 5
+    global thread_count
+    thread_count = 4
     mas = np.array(np.linspace(-Cw/2, Cw/2, Cw))
-    procs = []
     global hash_map
     hash_map = Manager().list()
     part = Cw // thread_count
 
-    for i in range(thread_count):
-        if i < thread_count - 1:
-            proc = Process(target=processing, args=(mas[i*part:(i + 1)*part], hash_map))
-            procs.append(proc)
-            proc.start()
-        else:
-            proc = Process(target=processing, args=(mas[i * part:], hash_map))
-            procs.append(proc)
-            proc.start()
+    pool = Pool(processes=thread_count)
+    output = [pool.apply_async(processing, args=(i, mas[i*part:(i + 1)*part])) for i in range(thread_count)]
+    result_buf = [p.get() for p in output]
+    result = []
+    for row in result_buf:
+        for j in row:
+            result.append(j)
 
-    for proc in procs:
-        proc.join()
-
-    print(len(hash_map))
-
-    #print(hash_map)
-
-    # for x in tqdm(range(-Cw//2, Cw//2, 1)):
-    #     for y in range(-Ch//2, Ch//2, 1):
-    #         D = CanvasToViewport(x, y)
-    #         color = TraceRay(O, D, 1, np.inf)
-    #         drawing.put_pixel(x, y, color)
-    drawing.draw_qt_points(hash_map)
+    drawing.draw_qt_points(result)
 
 
 if __name__ == "__main__":
