@@ -1,10 +1,10 @@
 from tqdm import tqdm
 
 import sys
+import numpy as np
 from PyQt5.QtWidgets import QWidget, QApplication
 from PyQt5.QtGui import QPainter, QColor, QPen
 from PyQt5.QtCore import Qt
-
 
 pixels = []
 Cw = 0
@@ -18,7 +18,7 @@ def set_window(x, y):
     Cw = x
 
 
-def put_pixel(x, y, color):
+def put_pixel(hash_map, x, y, color):
     x1 = Cw/2 + x
     y1 = Ch/2 - y - 1
 
@@ -26,7 +26,7 @@ def put_pixel(x, y, color):
         return
     else:
         _color = [min(255, color[0]), min(255, color[1]), min(255, color[2])]
-        pixels.append([x1, y1, _color])
+        hash_map.append([x1, y1, _color])
 
 
 class DrawQt(QWidget):
@@ -56,13 +56,17 @@ class DrawQt(QWidget):
         qp.setPen(Qt.red)
         size = self.size()
 
+        print(len(pixels))
+
         for pixel in tqdm(pixels):
             qp.setPen(QColor(pixel[2][0], pixel[2][1], pixel[2][2]))
             # print(pixel[0], pixel[1], pixel[2])
             qp.drawPoint(pixel[0], pixel[1])
 
 
-def draw_qt_points():
+def draw_qt_points(hash_map):
+    global pixels
+    pixels = hash_map
     app = QApplication(sys.argv)
     ex = DrawQt()
     sys.exit(app.exec_())

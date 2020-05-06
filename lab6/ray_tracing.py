@@ -3,6 +3,13 @@ from figures import Sphere
 from figures import Light
 import drawing
 from tqdm import tqdm
+from multiprocessing import Process, Manager
+
+import sys
+from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt5.QtGui import QPainter, QColor, QPen
+from PyQt5.QtCore import Qt
+
 
 N = 3
 Cw = 600    # width of window
@@ -10,6 +17,7 @@ Ch = 600    # height of window
 Vw = 1    # width of screen
 Vh = 1   # height of screen
 d = 1     # distance from camera
+center_window = np.array([0, 0, 0])
 
 spheres = []
 lights = []
@@ -23,6 +31,9 @@ spheres.append(Sphere([0, -5001, 0], 5000, [250, 250, 50], _specular=1000))
 lights.append(Light(0, 0.2))
 lights.append(Light(1, 0.6, _position=[2, 1, 0]))
 lights.append(Light(2, 0.2, _direction=[1, 4, 4]))
+
+
+hash_map = []
 
 
 def CanvasToViewport(x, y):   # coordinates on screen
@@ -100,18 +111,61 @@ def ComputeLighing(P, N, V, s):
     return i
 
 
+def processing(array, hash_map):
+    global Ch
+    global center_window
+    for x in tqdm(array):
+        for y in range(-Ch//2, Ch//2, 1):
+            D = CanvasToViewport(x, y)
+            color = TraceRay(center_window, D, 1, np.inf)
+
+            x1 = Cw / 2 + x
+            y1 = Ch / 2 - y - 1
+
+            if x1 < 0 or x1 > Cw or y1 < 0 or y1 > Ch:
+                return
+            else:
+                _color = [min(255, color[0]), min(255, color[1]), min(255, color[2])]
+                hash_map.append([x1, y1, _color])
+            #drawing.put_pixel(x, y, color)
+
+
 def main():
     global Cw
     global Ch
+    global center_window
     drawing.set_window(Cw, Ch)
-    O = np.array([0, 0, 0])
 
-    for x in tqdm(range(-Cw//2, Cw//2, 1)):
-        for y in range(-Ch//2, Ch//2, 1):
-            D = CanvasToViewport(x, y)
-            color = TraceRay(O, D, 1, np.inf)
-            drawing.put_pixel(x, y, color)
-    drawing.draw_qt_points()
+    thread_count = 5
+    mas = np.array(np.linspace(-Cw/2, Cw/2, Cw))
+    procs = []
+    global hash_map
+    hash_map = Manager().list()
+    part = Cw // thread_count
+
+    for i in range(thread_count):
+        if i < thread_count - 1:
+            proc = Process(target=processing, args=(mas[i*part:(i + 1)*part], hash_map))
+            procs.append(proc)
+            proc.start()
+        else:
+            proc = Process(target=processing, args=(mas[i * part:], hash_map))
+            procs.append(proc)
+            proc.start()
+
+    for proc in procs:
+        proc.join()
+
+    print(len(hash_map))
+
+    #print(hash_map)
+
+    # for x in tqdm(range(-Cw//2, Cw//2, 1)):
+    #     for y in range(-Ch//2, Ch//2, 1):
+    #         D = CanvasToViewport(x, y)
+    #         color = TraceRay(O, D, 1, np.inf)
+    #         drawing.put_pixel(x, y, color)
+    drawing.draw_qt_points(hash_map)
 
 
 if __name__ == "__main__":
