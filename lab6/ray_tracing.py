@@ -37,11 +37,11 @@ def CanvasToViewport(x, y):   # coordinates on screen
     return np.array([x*Vw/Cw, y*Vh/Ch, d])
 
 
-def TraceRay(O, D, t_min, t_max):
+def ClosestIntersection(O, D, t_min, t_max):
     closest_t = np.inf
     closest_sphere = None
     global spheres
-    global BACKGROUND_COLOR
+
     for sphere in spheres:
         t1, t2 = IntersectRaySphere(O, D, sphere)
         if t1 > t_min and t1 < t_max and t1 < closest_t:
@@ -50,6 +50,13 @@ def TraceRay(O, D, t_min, t_max):
         if t2 > t_min and t2 < t_max and t2 < closest_t:
             closest_t = t2
             closest_sphere = sphere
+
+    return closest_sphere, closest_t
+
+def TraceRay(O, D, t_min, t_max):
+    global BACKGROUND_COLOR
+
+    closest_sphere, closest_t = ClosestIntersection(O, D, t_min, t_max)
 
     if closest_sphere is None:
         return BACKGROUND_COLOR
@@ -88,8 +95,15 @@ def ComputeLighing(P, N, V, s):
             L = []
             if light.get_elements()['type'] == 'point':
                 L = (light.get_elements()['position'] - P).copy()
+                t_max = 1
             else:
                 L = light.get_elements()['direction'].copy()
+                t_max = np.inf
+
+            #shadow
+            shadow_sphere, shadow_t = ClosestIntersection(P, L, 0.001, t_max)
+            if shadow_sphere != None:
+                continue
 
             #diffuse
             NL = np.dot(N, L)
