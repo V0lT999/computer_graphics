@@ -14,15 +14,16 @@ Vw = 1    # width of screen
 Vh = 1   # height of screen
 d = 1     # distance from camera
 center_window = np.array([0, 0, 0])
+recursion_depth = 2
 
 spheres = []
 lights = []
-BACKGROUND_COLOR = [255, 255, 255]
+BACKGROUND_COLOR = [150, 150, 150]
 
-spheres.append(Sphere([0, -1, 3], 1, [255, 0, 0], _specular=500))
-spheres.append(Sphere([2, 0, 4], 1, [0, 0, 255], _specular=500))
-spheres.append(Sphere([-2, 0, 4], 1, [0, 255, 0], _specular=10))
-spheres.append(Sphere([0, -5001, 0], 5000, [250, 250, 50], _specular=1000))
+spheres.append(Sphere([0, -1, 3], 1, [255, 0, 0], _specular=500, _reflective=0.2))
+spheres.append(Sphere([2, 0, 4], 1, [0, 0, 255], _specular=500, _reflective=0.3))
+spheres.append(Sphere([-2, 0, 4], 1, [0, 255, 0], _specular=10, _reflective=0.4))
+spheres.append(Sphere([0, -5001, 0], 5000, [250, 250, 50], _specular=1000, _reflective=0))
 
 lights.append(Light(0, 0.2))
 lights.append(Light(1, 0.6, _position=[2, 1, 0]))
@@ -53,7 +54,12 @@ def ClosestIntersection(O, D, t_min, t_max):
 
     return closest_sphere, closest_t
 
-def TraceRay(O, D, t_min, t_max):
+
+def ReflectRay(R, N):
+    return 2*N*np.dot(N, R) - R
+
+
+def TraceRay(O, D, t_min, t_max, depth):
     global BACKGROUND_COLOR
 
     closest_sphere, closest_t = ClosestIntersection(O, D, t_min, t_max)
@@ -64,8 +70,16 @@ def TraceRay(O, D, t_min, t_max):
     P = O + closest_t*D
     N = P - closest_sphere.get_elements()['center']
     N = N / np.linalg.norm(N)
-    return np.array(closest_sphere.get_elements()['color']) * ComputeLighing(P, N, -D, closest_sphere.get_elements()['specular'])
+    local_color = np.array(closest_sphere.get_elements()['color']) * ComputeLighing(P, N, -D, closest_sphere.get_elements()['specular'])
 
+    r = closest_sphere.get_elements()['reflective']
+    if depth <= 0 or r <= 0:
+        return local_color
+
+    R = ReflectRay(-D, N)
+    reflected_color = TraceRay(P, R, 0.001, np.inf, depth - 1)
+
+    return np.array(np.dot(local_color, (1 - r)) + np.dot(reflected_color, r))
 
 def IntersectRaySphere(O, D, sphere):
     elements = sphere.get_elements()
@@ -124,6 +138,7 @@ def processing(i, array):
     global Ch
     global center_window
     global thread_count
+    global recursion_depth
 
     hash_mapp = []
     text = 'progressbar #{position}'.format(position=i)
@@ -131,7 +146,7 @@ def processing(i, array):
     for x in bar:
         for y in range(-Ch//2, Ch//2, 1):
             D = CanvasToViewport(x, y)
-            color = TraceRay(center_window, D, 1, np.inf)
+            color = TraceRay(center_window, D, 1, np.inf, recursion_depth)
 
             x1 = Cw / 2 + x
             y1 = Ch / 2 - y - 1
