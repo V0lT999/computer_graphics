@@ -1,12 +1,14 @@
 import numpy as np
+
 from figures import Sphere
 from figures import Light
 import drawing
+
 from tqdm import tqdm, trange
-from multiprocessing import Process, Manager
+
 from multiprocessing import Pool
 
-thread_count = 0
+thread_count = 0 # the thread's count
 N = 3
 Cw = 600    # width of window
 Ch = 600    # height of window
@@ -107,15 +109,18 @@ def TraceRay_P(O, D, t_min, t_max, depth):
     if closest_sphere is None:
         return BACKGROUND_COLOR
 
+    # the calculation of the local color
     P = np.array(O + closest_t*D)
     N = P - closest_sphere.get_elements()['center']
     N = N / np.linalg.norm(N)
     local_color = np.array(closest_sphere.get_elements()['color']) * ComputeLighing(P, N, -D, closest_sphere.get_elements()['specular'])
 
+    # If we have reached the recursion limit or the object is not reflective, then we are done
     reflective = closest_sphere.get_elements()['reflective']
     if depth <= 0 or reflective <= 0:
         return local_color
 
+    # Calculating the color of the reflected beam
     R = ReflectRay(-D, N)
     reflected_color = TraceRay_P(P, R, 0.001, np.inf, depth - 1)
 
