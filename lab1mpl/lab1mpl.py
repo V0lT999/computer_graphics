@@ -12,15 +12,20 @@ def rotate_figure(os='y', angle_s='0'):
     #     [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5], [-0.5, -0.5, -0.5],
     #     [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, -0.5, 0.5]
     # ]
+
+    # set cube matrix
     matrix = [
         [0.5, -0.5, -0.5], [0.5,  0.5, -0.5], [-0.5,  0.5, -0.5], [-0.5, -0.5, -0.5],
         [0.5, -0.5, 0.5], [0.5,  0.5, 0.5], [-0.5,  0.5, 0.5], [-0.5, -0.5, 0.5]
     ]
     T = [[]]
     res_matrix = np.zeros((8, 3))
+
+    # count cos and sin of angle
     cos_count = np.cos(angle)
     sin_count = np.sin(angle)
 
+    # getting the resulting matrix
     if os == "x":
         T = np.array([[1, 0, 0], [0, cos_count, sin_count], [0, -sin_count, cos_count]])
         res_matrix = np.dot(matrix, T.transpose())
