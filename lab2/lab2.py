@@ -6,6 +6,14 @@ from tkinter.ttk import *
 
 
 def B(x, k, i, t):
+    """
+
+    :param x: function parameter
+    :param k: degree
+    :param i: index
+    :param t: value of the node vector
+    :return: coefficient
+    """
     if k == 0:
         return 1.0 if t[i] <= x < t[i+1] else 0.0
     if t[i+k] == t[i]:
@@ -20,6 +28,9 @@ def B(x, k, i, t):
 
 
 def bspline(x, t, c, k):
+    """
+    :return: coordinate of point
+    """
     n = len(t) - k - 1
     assert (n >= k+1) and (len(c) >= n)
     return sum(c[i] * B(x, k, i, t) for i in range(n))
@@ -148,6 +159,21 @@ def main_window():
         draw_spline(res_points)
 
     def reset():
+        x1_field.insert(0, points[0][0])
+        y1_field.insert(0, points[0][1])
+        x2_field.insert(0, points[1][0])
+        y2_field.insert(0, points[1][1])
+        x3_field.insert(0, points[2][0])
+        y3_field.insert(0, points[2][1])
+        x4_field.insert(0, points[3][0])
+        y4_field.insert(0, points[3][1])
+        x5_field.insert(0, points[4][0])
+        y5_field.insert(0, points[4][1])
+        x6_field.insert(0, points[5][0])
+        y6_field.insert(0, points[5][1])
+        x7_field.insert(0, points[6][0])
+        y7_field.insert(0, points[6][1])
+
         res_points = points
         draw_spline(points)
 
