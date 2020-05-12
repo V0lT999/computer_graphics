@@ -7,21 +7,25 @@ from tkinter.ttk import *
 
 N = 15
 
+
 def bilinear_surface(verts):
     def get_matrix():
         dots = np.linspace(0, 1, N)
         all_verts = np.transpose([np.tile(dots, len(dots)), np.repeat(dots, len(dots))])
         for i in range(len(all_verts)):
-            matrix_a = [1 - all_verts[i][0], all_verts[i][0]]
-            matrix_b = [[1 - all_verts[i][1]], [all_verts[i][1]]]
+            # matrix [1 - u, u]
+            matrix_a = np.array([1 - all_verts[i][0], all_verts[i][0]])
+            # matrix [ [1 - w], [w] ]
+            matrix_b = np.array([[1 - all_verts[i][1]], [all_verts[i][1]]])
+            # Q (u, w)
             result[i] = np.dot(bilinear_matrix[0][0], matrix_a[0] * matrix_b[0][0]) + \
                         np.dot(bilinear_matrix[0][1], matrix_a[0] * matrix_b[1][0]) + \
                         np.dot(bilinear_matrix[1][0], matrix_a[1] * matrix_b[0][0]) + \
                         np.dot(bilinear_matrix[1][1], matrix_a[1] * matrix_b[1][0])
 
     result = np.zeros((N*N, 3))
-    #bilinear_matrix = [[[0, 0, 1], [1, 1, 1]], [[1, 0, 0], [0, 1, 0]]]
-    bilinear_matrix = [[verts[0], verts[1]], [verts[2], verts[3]]]
+
+    bilinear_matrix = np.array([[verts[0], verts[1]], [verts[2], verts[3]]])
 
     get_matrix()
 
@@ -33,9 +37,7 @@ def bilinear_surface(verts):
     r = [-1, 1]
 
     X, Y = np.meshgrid(r, r)
-    # plot vertices
-    #ax.scatter3D(result[:, 0], result[:, 1], result[:, 2])
-    #ax.add_collection3d(Poly3DCollection(result, facecolors='cyan', linewidths=1, edgecolors='r', alpha=.25))
+
     for i in range(len(result)):
         ax.scatter(result_x[i], result_y[i], result_z[i])
 
@@ -45,9 +47,10 @@ def bilinear_surface(verts):
 
     plt.show()
 
+
 def main_window():
-    points = [(0, 0, 1), (1, 1, 1), (1, 0, 0), (0, 1, 0)]
-    my_points = [(0, 3, 1), (1, 4, 1), (0, 4, 0), (1, 3, 0)]
+    points = [[0, 0, 1], [1, 1, 1], [1, 0, 0], [0, 1, 0]]
+    my_points = [[0, 3, 1], [1, 4, 1], [0, 4, 0], [1, 3, 0]]
     res_points = points.copy()
 
     def counts():
@@ -275,8 +278,6 @@ def main_window():
 
     rotate_button = Button(window, text="Rotate", command=rotate)
     rotate_button.place(x=300, y=370)
-
-    #reset()
 
     window.mainloop()
 
