@@ -10,13 +10,31 @@ import random
 
 
 def clipping(lines, window):
+    """
+    get indexes of segments that are included in the window
+    :param lines: generated segments
+    :param window: window
+    :return: array of indexes
+    """
     def get_y(x, line):
+        """
+        getting y coordinate of point
+        :param x: x coordinate
+        :param line: generated segment
+        :return: y coordinate
+        """
         return (x - line[0][0])/(line[1][0] - line[0][0])*(line[1][1] - line[0][1]) + line[0][1]
 
     def proof(i):
-
+        """
+        function for checking the inclusion of segment
+        :param i: index of segment
+        :return: 0 if not included and 1 if included
+        """
         line = lines[i].copy()
         bytes = [0, 0]
+
+        # finding minimum and maximum x of points of segment
         min_p = line[0].copy()
         max_p = line[1].copy()
         if min(line[0][0], line[1][0]) == line[1][0]:
@@ -24,6 +42,7 @@ def clipping(lines, window):
 
         points = [[min_p.copy(), max_p.copy()]]
 
+        # moving along the segment and checking the entry conditions
         for i in range(min_p[0], max_p[0], 1):
             points[0][0][0] = i
             points[0][0][1] = get_y(i, line)
@@ -42,10 +61,16 @@ def clipping(lines, window):
                 return 0
         return 2
 
-    mas = np.zeros(8)
-    mas_in = np.zeros(4)
-    # [0, 1, 2, 4, 5, 6, 8, 9, 10] i*2 + j
+    # [0, 1, 2, 4, 5, 6, 8, 9, 10]
     def get_bytes(lines, i, j):
+        """
+        Getting array of bytes as an integer (for ease of operation) according to the rule
+
+        :param lines: generated segments
+        :param i: number of segment
+        :param j: number of point of segment
+        :return: array of bytes as an integer
+        """
         if (lines[i][j][0] >= min(window[0][0], window[1][0])) and (lines[i][j][0] <= max(window[1][0], window[0][0])):
             if lines[i][j][1] >= min(window[0][1], window[1][1]):
                 if lines[i][j][1] <= max(window[0][1], window[1][1]):
@@ -71,10 +96,15 @@ def clipping(lines, window):
             else:
                 return 10
 
+    mas = np.zeros(8)
+    mas_in = np.zeros(4)
+
+    # generating of bytes
     for i in range(4):
         for j in range(2):
             mas[i * 2 + j] = get_bytes(lines, i, j)
 
+    # getting result
     for i in range(4):
         if mas[i*2] == 0 or mas[i*2 + 1] == 0:
             mas_in[i] = 1
@@ -84,8 +114,18 @@ def clipping(lines, window):
             mas_in[i] = proof(i)
     return mas_in
 
+
 def draw_lines(lines, window, mas_true_points):
-    #colors = ['red', 'orange', 'yellow', 'lime', 'b', 'navy', 'm']
+    """
+    Drawing lines
+
+    :param lines: generated segments
+    :param window: windows coordinates
+    :param mas_true_points: array of points that hit the screen
+    :return: -
+    """
+
+    # red is false and lime is true
     colors = ['red', 'lime']
 
     color = colors[0]
@@ -106,6 +146,10 @@ def draw_lines(lines, window, mas_true_points):
     plt.show()
 
 def generate_lines():
+    """
+    generation of segments
+    :return: array of generated segments coordinates
+    """
     coordinates = np.array([[[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]], [[0, 0], [0, 0]]])
     N = random.randint(5, 1000)
     for i in range(4):
@@ -115,6 +159,9 @@ def generate_lines():
 
 
 def main_window():
+    """
+    main function with GUI and default values
+    """
     points = [(0, 0, 1), (1, 1, 1), (1, 0, 0), (0, 1, 0)]
     default_window_points = np.array([[150, 100], [200, 250]])
     res_points = generate_lines()
@@ -203,6 +250,7 @@ def main_window():
     my_points_button.place(x=350, y=150)
 
     window.mainloop()
+
 
 if __name__ == "__main__":
     main_window()
