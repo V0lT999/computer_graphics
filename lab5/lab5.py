@@ -14,10 +14,16 @@ def main():
 
 
 def Roberts(data):
+    """
+    The Roberts algorithm
+    :param data: matrix of the coordinates of the cube
+    :return: the matrix of transformed coordinates of the cube
+    """
     verts = data[0]
     W = np.zeros(3)
     P = [1, -1, 1]
 
+    # search for the barycenter of a cube
     for i in range(2):
         max_value = -10
         min_value = 10
@@ -29,8 +35,10 @@ def Roberts(data):
         W[i] = (max_value + min_value)/2
 
     new_data = []
+
+    # loop across all faces
     for vector in verts:
-        #Search vectors
+        # find the coordinates of two vectors that lie in the plane of the face
         Vec1_x = vector[0][0] - vector[1][0]
         Vec2_x = vector[2][0] - vector[1][0]
         Vec1_y = vector[0][1] - vector[1][1]
@@ -38,19 +46,22 @@ def Roberts(data):
         Vec1_z = vector[0][2] - vector[1][2]
         Vec2_z = vector[2][2] - vector[1][2]
 
-        #Search coefficients
+        # calculate the coefficients of the plane equation
         A = Vec1_y*Vec2_z - Vec2_y*Vec1_z
         B = Vec1_z*Vec2_x - Vec2_z*Vec1_x
         C = Vec1_x*Vec2_y - Vec2_x*Vec1_y
         D = -(A*vector[0][0] + B*vector[0][1] + C*vector[0][2])
 
+        # find the coefficient that changes the sign of the plane
         m = -(A*W[0] + B*W[1] + C*W[2] + D)
 
+        # correcting the direction of the plane
         A = A*m
         B = B*m
         C = C*m
         D = D*m
 
+        # defining the visibility of faces
         if (A*P[0] + B*P[1] + C*P[2] + D) > 0:
             new_data.append(vector)
 
@@ -58,6 +69,9 @@ def Roberts(data):
 
 
 def main_window():
+    """
+    GUI function
+    """
     def click():
         angle_f = angle_field.get()
         if angle_f == '':
