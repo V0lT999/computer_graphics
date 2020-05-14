@@ -8,22 +8,22 @@ from tqdm import tqdm, trange
 
 from multiprocessing import Pool
 
-thread_count = 0 # the thread's count
-N = 3
+thread_count = 0  # the thread's count
 Cw = 600    # width of window
 Ch = 600    # height of window
 Vw = 1    # width of screen
 Vh = 1   # height of screen
 d = 1     # distance from camera
 center_window = np.array([0, 0, 0])
-recursion_depth = 2
+recursion_depth = 2  # specularity
 
+# object initialization
 spheres = []
 lights = []
 BACKGROUND_COLOR = [150, 150, 150]
 
 spheres.append(Sphere([0, -1, 3], 1, [255, 0, 0], _specular=500, _reflective=0.2, _camera=center_window.copy()))
-spheres.append(Sphere([2, 0, 4], 1, [0, 0, 255], _specular=500, _reflective=0.3, _camera=center_window.copy()))
+spheres.append(Sphere([2, 0, 4], 1, [0, 0, 255], _specular=500, _reflective=0, _camera=center_window.copy()))
 spheres.append(Sphere([-2, 0, 4], 1, [0, 255, 0], _specular=10, _reflective=0.4, _camera=center_window.copy()))
 spheres.append(Sphere([0, -5001, 0], 5000, [250, 250, 50], _specular=1000, _reflective=0, _camera=center_window.copy()))
 
@@ -31,12 +31,27 @@ lights.append(Light(0, 0.2))
 lights.append(Light(1, 0.6, _position=[2, 1, 0]))
 lights.append(Light(2, 0.2, _direction=[1, 4, 4]))
 
-def CanvasToViewport(x, y):   # coordinates on screen
+
+def CanvasToViewport(x, y):
+    """
+    change coordinate system
+    :param x: system x
+    :param y: system y
+    :return: new coordinates
+    """
     global Cw, Ch, Vw, Vh, d
     return np.array([x*Vw/Cw, y*Vh/Ch, d])
 
 
 def ClosestIntersection(O, D, t_min, t_max):
+    """
+    Finding intersections of rays with a sphere
+    :param O: Starting point of the beam
+    :param D: Ray coordinates
+    :param t_min: minimum parameter
+    :param t_max: maximum parameter
+    :return: closest_sphere and closest t parameter
+    """
     closest_t = np.inf
     closest_sphere = None
     global spheres
@@ -56,6 +71,14 @@ def ClosestIntersection(O, D, t_min, t_max):
 
 
 def ClosestIntersection_P(O, D, t_min, t_max):
+    """
+    Finding intersections of rays with spheres when mirroring
+    :param O: Starting point of the beam
+    :param D: Ray coordinates
+    :param t_min: minimum parameter
+    :param t_max: maximum parameter
+    :return: closest_sphere and closest t parameter
+    """
     closest_t = np.inf
     closest_sphere = None
     global spheres
@@ -75,10 +98,25 @@ def ClosestIntersection_P(O, D, t_min, t_max):
 
 
 def ReflectRay(R, N):
+    """
+    counting the reflection beam
+    :param R: ray
+    :param N: normal line
+    :return: reflection beam
+    """
     return 2*N*np.dot(N, R) - R
 
 
 def TraceRay(O, D, t_min, t_max, depth):
+    """
+    Counts the color of the sphere at the nearest point t in the interval
+    :param O: Starting point of the beam
+    :param D: Ray coordinates
+    :param t_min: minimum parameter
+    :param t_max: maximum parameter
+    :param depth: parameter of the mirror index
+    :return: color of point
+    """
     global BACKGROUND_COLOR
 
     closest_sphere, closest_t = ClosestIntersection(O, D, t_min, t_max)
@@ -102,6 +140,15 @@ def TraceRay(O, D, t_min, t_max, depth):
 
 
 def TraceRay_P(O, D, t_min, t_max, depth):
+    """
+        Counts the color of the sphere at the nearest point t in the interval when mirroring
+        :param O: Starting point of the beam
+        :param D: Ray coordinates
+        :param t_min: minimum parameter
+        :param t_max: maximum parameter
+        :param depth: parameter of the mirror index
+        :return: color of point
+        """
     global BACKGROUND_COLOR
 
     closest_sphere, closest_t = ClosestIntersection_P(O, D, t_min, t_max)
@@ -128,6 +175,14 @@ def TraceRay_P(O, D, t_min, t_max, depth):
 
 
 def IntersectRaySphere(O, D, DD, sphere):
+    """
+    Solves the square equation
+    :param O: Starting point of the beam
+    :param D: Ray coordinates
+    :param DD: dot(D, D)
+    :param sphere: sphere
+    :return: Intersection
+    """
     global center_window
 
     rr = sphere.get_rr()
@@ -148,12 +203,19 @@ def IntersectRaySphere(O, D, DD, sphere):
 
 
 def IntersectRaySphere_P(O, D, DD, sphere):
+    """
+    Solves the square equation when mirroring
+    :param O: Starting point of the beam
+    :param D: Ray coordinates
+    :param DD: dot(D, D)
+    :param sphere: sphere
+    :return: Intersection
+    """
     global center_window
 
     rr = sphere.get_rr()
     OC = O - sphere.get_elements()['center']
     k3 = np.dot(OC, OC) - rr
-
 
     k1 = DD
     k2 = 2*np.dot(OC, D)
@@ -168,6 +230,14 @@ def IntersectRaySphere_P(O, D, DD, sphere):
 
 
 def ComputeLighing(P, N, V, s):
+    """
+    Calculation of lighting
+    :param P: to calculate the intersection
+    :param N: calculating the sphere normal at the intersection point
+    :param V: overview vector
+    :param s: the reflection rate
+    :return: the lighting coefficient
+    """
     global lights
     i = 0.0
     for light in lights:
@@ -203,6 +273,12 @@ def ComputeLighing(P, N, V, s):
 
 
 def processing(i, array):
+    """
+    counting function for a single stream
+    :param i: index of stream
+    :param array: coordinates array
+    :return: counted rays
+    """
     global Ch
     global center_window
     global recursion_depth
@@ -227,9 +303,14 @@ def processing(i, array):
     return hash_mapp
 
 def main():
+    """
+    main function
+    """
     global Cw
     global Ch
     drawing.set_window(Cw, Ch)
+
+    print("I'm sorry, Python is soooo slow :( please wait\n ")
 
     global thread_count
     thread_count = 4
